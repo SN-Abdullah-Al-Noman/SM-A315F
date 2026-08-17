@@ -8,10 +8,29 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-      - name: Checkout source
+      - name: Checkout kernel source
         uses: actions/checkout@v4
 
-      - name: Check files
+      - name: Install dependencies
         run: |
-          ls
-          ls arch/arm64/configs
+          sudo apt update
+          sudo apt install -y \
+            bc bison flex build-essential \
+            libssl-dev libelf-dev \
+            python3 zip unzip \
+            clang lld
+
+      - name: Configure kernel
+        run: |
+          make O=out ARCH=arm64 a31_defconfig
+
+      - name: Build kernel
+        run: |
+          make O=out ARCH=arm64 -j$(nproc)
+
+      - name: Upload kernel
+        uses: actions/upload-artifact@v4
+        with:
+          name: a31-kernel
+          path: |
+            out/arch/arm64/boot/Image.gz-dtb
